@@ -12,6 +12,8 @@ For every student and every letter A–Z you toggle three things:
 That's 78 checks per student, 1,560 for a full class — so the whole app is built around
 making one tap the entire interaction.
 
+**Live app:** <https://stovelorentzendigital.github.io/LetterAssessment/>
+
 ## Three ways to work
 
 - **By student** — pick a child, run down the alphabet. Best for a one-on-one conference.
