@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Letter Check">
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <g fill="none" stroke="#ffffff" stroke-width="38.4" stroke-linecap="round">
+    <path d="M256 110 151 358"/>
+    <path d="M256 110 361 358"/>
+    <path d="M187 289h138"/>
+  </g>
+  <g>
+    <circle cx="171.5" cy="432.6" r="24.6" fill="#93c5fd"/>
+    <circle cx="256" cy="432.6" r="24.6" fill="#fbbf24"/>
+    <circle cx="340.5" cy="432.6" r="24.6" fill="#c4b5fd"/>
+  </g>
+</svg>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Letter Check</title>
+<meta name="description" content="Fast classroom assessment of uppercase, lowercase, and letter-sound identification.">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Letter Check">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar-top">
+    <h1 class="brand"><span class="brand-mark">Aa</span> Letter Check</h1>
+    <div class="appbar-actions">
+      <button id="undoBtn" class="iconbtn" title="Undo last change" disabled>Undo</button>
+      <button id="menuBtn" class="iconbtn" title="Data &amp; students">Manage</button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-view="student" aria-selected="true">By student</button>
+    <button class="tab" role="tab" data-view="letter" aria-selected="false">By letter</button>
+    <button class="tab" role="tab" data-view="overview" aria-selected="false">Overview</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ── BY STUDENT ─────────────────────────────────────────── -->
+  <section id="view-student" class="view">
+    <div class="picker">
+      <button class="stepper" id="prevStudent" title="Previous student">&#8249;</button>
+      <select id="studentSelect" class="select" aria-label="Select student"></select>
+      <button class="stepper" id="nextStudent" title="Next student">&#8250;</button>
+    </div>
+    <div class="scorebar" id="studentScore"></div>
+    <div class="legend" aria-hidden="true">
+      <span class="legend-gutter"></span>
+      <span class="legend-item u">Uppercase</span>
+      <span class="legend-item l">Lowercase</span>
+      <span class="legend-item s">Sound</span>
+    </div>
+    <div id="studentRows" class="rows"></div>
+  </section>
+
+  <!-- ── BY LETTER ──────────────────────────────────────────── -->
+  <section id="view-letter" class="view" hidden>
+    <div class="alphabet" id="alphabetStrip"></div>
+    <div class="scorebar" id="letterScore"></div>
+    <div class="legend" aria-hidden="true">
+      <span class="legend-gutter"></span>
+      <span class="legend-item u">Uppercase</span>
+      <span class="legend-item l">Lowercase</span>
+      <span class="legend-item s">Sound</span>
+    </div>
+    <div id="letterRows" class="rows"></div>
+  </section>
+
+  <!-- ── OVERVIEW ───────────────────────────────────────────── -->
+  <section id="view-overview" class="view" hidden>
+    <div id="overviewSummary" class="summary"></div>
+    <div class="matrix-wrap">
+      <table class="matrix" id="matrix"></table>
+    </div>
+    <p class="hint">Each cell stacks three bars — uppercase, lowercase, sound. Tap a student's name to open their sheet.</p>
+  </section>
+</main>
+
+<!-- ── MANAGE SHEET ─────────────────────────────────────────── -->
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-backdrop" data-close></div>
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Manage students and data">
+    <div class="sheet-head">
+      <h2>Manage</h2>
+      <button class="iconbtn" data-close>Done</button>
+    </div>
+    <div class="sheet-body">
+      <h3>Students <span class="count" id="rosterCount"></span></h3>
+      <form id="addForm" class="addform">
+        <input id="addName" class="input" placeholder="Add student name" maxlength="40" autocomplete="off">
+        <button class="btn primary" type="submit">Add</button>
+      </form>
+      <ul id="roster" class="roster"></ul>
+
+      <h3>Results</h3>
+      <div class="btnrow">
+        <button class="btn" id="downloadCsv">Download CSV</button>
+        <button class="btn" id="copyCsv">Copy for spreadsheet</button>
+      </div>
+
+      <h3>Backup</h3>
+      <div class="btnrow">
+        <button class="btn" id="downloadJson">Download backup</button>
+        <button class="btn" id="importBtn">Restore backup</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+      <div class="btnrow" id="shareRow" hidden>
+        <button class="btn" id="shareCsv">Share CSV&#8230;</button>
+        <button class="btn" id="shareJson">Share backup&#8230;</button>
+      </div>
+      <div class="btnrow">
+        <button class="btn danger" id="clearMarks">Clear all marks</button>
+      </div>
+      <p class="hint">Everything is stored on this device only. Download a backup before clearing or switching devices.</p>
+      <p class="hint version" id="versionLine"></p>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
