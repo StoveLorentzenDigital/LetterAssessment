@@ -4,8 +4,9 @@
   'use strict';
 
   const STORAGE_KEY = 'letter-check.v1';
-  const APP_VERSION = '1.1.1';
-  const MAX_STUDENTS = 20;
+  const APP_VERSION = '1.2.0';
+  const MAX_STUDENTS = 100;   // hard cap; never surfaced in the UI
+  const FILL_COUNT = 20;      // what "Fill roster" seeds, for a typical class
   const MAX_NUMBER = 9999;
   const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const CATS = [
@@ -17,6 +18,9 @@
 
   const SPEAKER_SVG =
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5a1 1 0 0 0 1 1h3l4.3 3.6a.8.8 0 0 0 1.3-.6V5.5a.8.8 0 0 0-1.3-.6L8 8.5H5a1 1 0 0 0-1 1Zm13.4-3a1 1 0 0 0-.2 1.4 6 6 0 0 1 0 6.2 1 1 0 1 0 1.6 1.2 8 8 0 0 0 0-8.6 1 1 0 0 0-1.4-.2Zm-2.7 2.9a1 1 0 0 0-.3 1.4 2.5 2.5 0 0 1 0 2.4 1 1 0 0 0 1.7 1 4.5 4.5 0 0 0 0-4.4 1 1 0 0 0-1.4-.4Z"/></svg>';
+
+  const GRIP_SVG =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="4" r="1.35"/><circle cx="10" cy="4" r="1.35"/><circle cx="6" cy="8" r="1.35"/><circle cx="10" cy="8" r="1.35"/><circle cx="6" cy="12" r="1.35"/><circle cx="10" cy="12" r="1.35"/></svg>';
 
   /* ── State ──────────────────────────────────────────────── */
 
@@ -414,7 +418,13 @@
   /* ── Manage sheet ───────────────────────────────────────── */
 
   const sheet = $('#sheet');
-  const openSheet = () => { sheet.hidden = false; renderRoster(); };
+  const openSheet = () => {
+    sheet.hidden = false;
+    // Manage opens on the headcount alone; an empty roster is the exception,
+    // since there the Add button is the only thing worth showing.
+    $('#studentsFold').open = !state.students.length;
+    renderRoster();
+  };
   const closeSheet = () => { sheet.hidden = true; render(); };
 
   $('#menuBtn').addEventListener('click', openSheet);
@@ -423,22 +433,29 @@
 
   function renderRoster() {
     const list = $('#roster');
-    const full = state.students.length >= MAX_STUDENTS;
-    $('#rosterCount').textContent = `${state.students.length} / ${MAX_STUDENTS}`;
-    $('#addStudent').disabled = full;
-    $('#fillRoster').disabled = full;
+    const count = state.students.length;
+    $('#rosterCount').textContent = String(count);
 
-    if (!state.students.length) {
-      list.innerHTML = `<li class="empty" style="display:block">No students yet. Add them one at a time, or fill the roster with ${MAX_STUDENTS} numbered slots.</li>`;
+    // Fill roster leaves the row entirely once it would be a no-op, rather than
+    // sitting there greyed out.
+    $('#addRow').innerHTML =
+      `<button class="btn primary" id="addStudent" type="button"${count >= MAX_STUDENTS ? ' disabled' : ''}>Add student</button>` +
+      (count < FILL_COUNT ? '<button class="btn" id="fillRoster" type="button">Fill roster</button>' : '');
+
+    if (!count) {
+      list.innerHTML = `<li class="empty" style="display:block">No students yet. Add them one at a time, or fill the roster with ${FILL_COUNT} numbered slots.</li>`;
       return;
     }
 
-    list.innerHTML = state.students.map((s, i) => `<li data-id="${s.id}">
-      <span class="rosterlabel">Student</span>
-      <input class="input num" type="number" inputmode="numeric" min="1" max="${MAX_NUMBER}"
-        value="${s.num}" aria-label="Student number">
-      <button class="mini" data-move="-1" title="Move up"${i === 0 ? ' disabled' : ''}>&#8593;</button>
-      <button class="mini" data-move="1" title="Move down"${i === state.students.length - 1 ? ' disabled' : ''}>&#8595;</button>
+    // One student has nothing to reorder against, so no handle is drawn.
+    list.innerHTML = state.students.map(s => `<li data-id="${s.id}">
+      ${count > 1 ? `<button class="drag" data-drag type="button" aria-label="Reorder Student ${s.num}"
+        title="Drag to reorder, or focus and use the arrow keys">${GRIP_SVG}</button>` : ''}
+      <span class="rosterfield">
+        <span class="rosterlabel">Student</span>
+        <input class="input num" type="number" inputmode="numeric" min="1" max="${MAX_NUMBER}"
+          value="${s.num}" aria-label="Student number">
+      </span>
       <button class="mini del" data-del title="Remove student">&#10005;</button>
     </li>`).join('');
   }
@@ -474,18 +491,81 @@
       undoStack = undoStack.filter(entry => entry.id !== student.id);
       save();
       renderRoster();
-      return;
     }
+  });
 
-    const move = e.target.getAttribute('data-move');
-    if (move) {
-      const target = idx + Number(move);
-      if (target < 0 || target >= state.students.length) return;
-      const [student] = state.students.splice(idx, 1);
-      state.students.splice(target, 0, student);
-      save();
-      renderRoster();
+  /* — Reordering — */
+
+  function moveStudent(id, delta) {
+    const idx = state.students.findIndex(s => s.id === id);
+    const target = idx + delta;
+    if (idx < 0 || target < 0 || target >= state.students.length) return false;
+    const [student] = state.students.splice(idx, 1);
+    state.students.splice(target, 0, student);
+    return true;
+  }
+
+  // Pointer events rather than HTML5 drag-and-drop, which never fires for touch
+  // on iPadOS — the device this app is actually used on. The row is reinserted
+  // in the list as the pointer crosses its neighbours, so the list itself is the
+  // preview and there is no drag ghost to keep in sync.
+  let dragging = null;
+
+  function onDragMove(e) {
+    if (!dragging || e.pointerId !== dragging.pointerId) return;
+    const list = $('#roster');
+    const li = dragging.li;
+    let before = null;
+    for (const node of list.children) {
+      if (node === li) continue;
+      const box = node.getBoundingClientRect();
+      if (e.clientY < box.top + box.height / 2) { before = node; break; }
     }
+    if (li.nextElementSibling !== before) list.insertBefore(li, before);
+  }
+
+  function endDrag() {
+    if (!dragging) return;
+    document.removeEventListener('pointermove', onDragMove);
+    document.removeEventListener('pointerup', endDrag);
+    document.removeEventListener('pointercancel', endDrag);
+    dragging.li.classList.remove('dragging');
+    dragging = null;
+    const order = [...$('#roster').children].map(node => node.dataset.id);
+    state.students.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+    save();
+    renderRoster();
+  }
+
+  $('#roster').addEventListener('pointerdown', e => {
+    const handle = e.target.closest('[data-drag]');
+    if (!handle || dragging || state.students.length < 2) return;
+    e.preventDefault();
+    dragging = { li: handle.closest('li'), pointerId: e.pointerId };
+    dragging.li.classList.add('dragging');
+    // Capture keeps events coming if the finger strays off the row; the
+    // document-level listeners cover the case where it is refused, and also
+    // catch a pointer released outside the sheet.
+    try { handle.setPointerCapture(e.pointerId); } catch (err) { /* not fatal */ }
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', endDrag);
+  });
+
+  // The handle is focusable, so the arrow keys still reorder for anyone not
+  // dragging with a pointer.
+  $('#roster').addEventListener('keydown', e => {
+    const handle = e.target.closest('[data-drag]');
+    if (!handle) return;
+    const delta = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+    if (!delta) return;
+    e.preventDefault();
+    const id = handle.closest('li').dataset.id;
+    if (!moveStudent(id, delta)) return;
+    save();
+    renderRoster();
+    const moved = $(`#roster li[data-id="${id}"] [data-drag]`);
+    if (moved) moved.focus();
   });
 
   function addStudent() {
@@ -495,16 +575,16 @@
     return student;
   }
 
-  $('#addStudent').addEventListener('click', () => {
-    if (state.students.length >= MAX_STUDENTS) { toast(`Roster is full (${MAX_STUDENTS} students).`); return; }
-    addStudent();
-    save();
-    renderRoster();
-  });
-
-  $('#fillRoster').addEventListener('click', () => {
-    if (state.students.length >= MAX_STUDENTS) { toast(`Roster is full (${MAX_STUDENTS} students).`); return; }
-    while (state.students.length < MAX_STUDENTS) addStudent();
+  $('#addRow').addEventListener('click', e => {
+    if (e.target.id === 'addStudent') {
+      if (state.students.length >= MAX_STUDENTS) { toast('Roster is full.'); return; }
+      addStudent();
+    } else if (e.target.id === 'fillRoster') {
+      if (state.students.length >= FILL_COUNT) return;
+      while (state.students.length < FILL_COUNT) addStudent();
+    } else {
+      return;
+    }
     save();
     renderRoster();
   });

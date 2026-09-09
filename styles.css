@@ -204,14 +204,17 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
 .numbtn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; width: 100%; }
 
 /* ── Manage sheet ───────────────────────────────────────────── */
-.sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-start; justify-content: center; }
 .sheet-backdrop { position: absolute; inset: 0; background: rgba(10,12,20,.5); }
 .sheet-panel {
   position: relative; width: min(640px, 100%); max-height: 88vh; overflow: auto;
-  background: var(--bg); border-radius: 18px 18px 0 0; border: 1px solid var(--line);
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
-  animation: rise .18s ease-out;
+  background: var(--bg); border-radius: 0 0 18px 18px; border: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top); padding-bottom: 16px;
+  animation: drop .18s ease-out;
 }
+/* The sheet drops from the top; the toast still rises from the bottom, so the
+   two keep separate keyframes. */
+@keyframes drop { from { transform: translateY(-14px); opacity: .5; } }
 @keyframes rise { from { transform: translateY(14px); opacity: .5; } }
 .sheet-head {
   position: sticky; top: 0; background: var(--bg); display: flex; align-items: center;
@@ -222,6 +225,28 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
 .sheet-body { padding: 16px; display: grid; gap: 10px; }
 .sheet-body h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-top: 8px; }
 .count { color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+/* The roster folds away so Manage opens on the headcount rather than on 20 rows. */
+.fold > summary { display: block; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary h3 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
+.fold > summary h3::before {
+  content: ""; flex: none; width: 7px; height: 7px; margin-left: 2px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform .15s ease;
+}
+.fold[open] > summary h3::before { transform: rotate(45deg); }
+
+/* Collapsed, an accent rule sits under the heading — the same 3px bar the
+   selected tab carries — so the section reads as folded content rather than as a
+   bare label. It lives inside the summary so that tapping it opens the fold. */
+.fold:not([open]) > summary::after {
+  content: ""; display: block; height: 3px; margin-top: 8px; background: var(--accent);
+}
+/* Scoped to [open]: an unconditional `display` here would outrank the UA's
+   `details:not([open]) > *:not(summary) { display: none }` — the rule Safari and
+   Firefox fold with — and the roster would never hide on an iPad. */
+.fold[open] > .foldbody { display: grid; gap: 10px; padding-top: 10px; }
 .addform { display: flex; gap: 8px; }
 .input {
   flex: 1; min-width: 0; height: 46px; padding: 0 12px; border-radius: 11px;
@@ -237,9 +262,22 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
 .btnrow .btn { flex: 1 1 auto; }
 .roster { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .roster li { display: flex; gap: 6px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 6px; }
-.roster .rosterlabel { color: var(--muted); font-size: 13px; padding-left: 6px; }
+/* Label and number share a font size, so centring the two lines puts their
+   baselines — and so their bottom edges — exactly on top of each other. A
+   smaller label would need baseline alignment, which a fixed-height <input>
+   does not report reliably. Colour and weight carry the distinction instead. */
+.roster .rosterfield { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; }
+.roster .rosterlabel { color: var(--muted); padding-left: 6px; }
 .roster .input { height: 40px; border: 0; background: none; font-weight: 600; box-shadow: none; }
-.roster .input.num { flex: none; width: 74px; margin-right: auto; padding: 0 6px; }
+.roster .input.num { flex: none; width: 74px; padding: 0 6px; }
+.roster .drag {
+  width: 32px; height: 36px; flex: none; display: grid; place-items: center;
+  border: 0; background: none; color: var(--muted); padding: 0;
+  cursor: grab; touch-action: none; /* the handle owns the gesture, so touch drags instead of scrolling */
+}
+.roster .drag svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+.roster li.dragging { border-color: var(--accent); box-shadow: 0 8px 20px rgba(10, 12, 20, .18); }
+.roster li.dragging .drag { cursor: grabbing; color: var(--accent); }
 .roster .mini { width: 36px; height: 36px; flex: none; border-radius: 9px; border: 1px solid var(--line); background: var(--surface-2); font-size: 15px; line-height: 1; color: var(--muted); padding: 0; }
 .roster .mini.del { color: var(--danger); }
 .empty { color: var(--muted); font-size: 14px; padding: 10px 2px; }

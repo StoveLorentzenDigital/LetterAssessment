@@ -81,14 +81,15 @@
       <button class="iconbtn" data-close>Done</button>
     </div>
     <div class="sheet-body">
-      <h3>Students <span class="count" id="rosterCount"></span></h3>
-      <div class="addform">
-        <button class="btn primary" id="addStudent" type="button">Add student</button>
-        <button class="btn" id="fillRoster" type="button">Fill roster</button>
-      </div>
-      <p class="hint">Students are tracked by number only — no names are stored. Keep the
-        number-to-student key in your own gradebook.</p>
-      <ul id="roster" class="roster"></ul>
+      <details class="fold" id="studentsFold">
+        <summary><h3>Students <span class="count" id="rosterCount"></span></h3></summary>
+        <div class="foldbody">
+          <div class="addform" id="addRow"></div>
+          <p class="hint">Students are tracked by number only — no names are stored. Keep the
+            number-to-student key in your own gradebook.</p>
+          <ul id="roster" class="roster"></ul>
+        </div>
+      </details>
 
       <h3>Results</h3>
       <div class="btnrow">
