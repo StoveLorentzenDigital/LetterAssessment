@@ -68,7 +68,7 @@
     <div class="matrix-wrap">
       <table class="matrix" id="matrix"></table>
     </div>
-    <p class="hint">Each cell stacks three bars — uppercase, lowercase, sound. Tap a student's name to open their sheet.</p>
+    <p class="hint">Each cell stacks three bars — uppercase, lowercase, sound. Tap a student number to open that sheet.</p>
   </section>
 </main>
 
@@ -82,10 +82,12 @@
     </div>
     <div class="sheet-body">
       <h3>Students <span class="count" id="rosterCount"></span></h3>
-      <form id="addForm" class="addform">
-        <input id="addName" class="input" placeholder="Add student name" maxlength="40" autocomplete="off">
-        <button class="btn primary" type="submit">Add</button>
-      </form>
+      <div class="addform">
+        <button class="btn primary" id="addStudent" type="button">Add student</button>
+        <button class="btn" id="fillRoster" type="button">Fill roster</button>
+      </div>
+      <p class="hint">Students are tracked by number only — no names are stored. Keep the
+        number-to-student key in your own gradebook.</p>
       <ul id="roster" class="roster"></ul>
 
       <h3>Results</h3>
@@ -107,7 +109,7 @@
       <div class="btnrow">
         <button class="btn danger" id="clearMarks">Clear all marks</button>
       </div>
-      <p class="hint">Everything is stored on this device only. Download a backup before clearing or switching devices.</p>
+      <p class="hint">Everything is stored on this device only, and never includes student names. Download a backup before clearing or switching devices.</p>
       <p class="hint version" id="versionLine"></p>
     </div>
   </div>

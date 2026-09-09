@@ -1,7 +1,8 @@
 # Letter Check
 
 A tiny offline PWA for tracking letter comprehension across a class of up to 20 students.
-For every student and every letter A–Z you toggle three things:
+Students are identified by number, never by name. For every student and every letter A–Z you
+toggle three things:
 
 | Toggle | Means |
 | --- | --- |
@@ -22,7 +23,7 @@ making one tap the entire interaction.
   mastered that category.
 - **Overview** — the whole class as a grid: one column per letter, three bars per cell,
   a percentage per student, and a class percentage per letter along the bottom so you can see
-  which letters to reteach. Tap any name to jump to that student's sheet.
+  which letters to reteach. Tap any student number to jump to that sheet.
 
 **Undo** in the top bar reverses the last toggle (up to 100 deep) for when a tap lands on the
 wrong row.
@@ -50,12 +51,22 @@ school web server — and open it once on the device.
 
 Once installed it launches full screen and works with no network at all.
 
+## Students are numbers
+
+The roster is a list of numbers — **Student 1**, **Student 2**, and so on — and the app never
+asks for or stores a name. Under *Manage* you add slots one at a time or fill the roster to 20,
+and each slot's number is editable, so it can match the numbering already in your own gradebook.
+Removing a student frees that number for the next one added.
+
+Keep the number-to-child key wherever you already keep your roster. That way an exported CSV, a
+JSON backup, or a lost tablet carries no identifying information about any child.
+
 ## Data
 
 Everything is stored in the browser's `localStorage` on that one device. Nothing is uploaded,
-and there are no accounts.
+and there are no accounts. Exports and backups contain student numbers only.
 
-- **Download CSV** — one row per student, three columns per letter (1/0), plus per-category and
+- **Download CSV** — one row per student number, three columns per letter (1/0), plus per-category and
   overall totals. Saved to the device's downloads folder, UTF-8 with a BOM so Excel opens it
   cleanly.
 - **Copy for spreadsheet** — the same table, tab-separated, straight onto the clipboard. Paste
@@ -66,7 +77,7 @@ and there are no accounts.
   (iPad, phone), for AirDrop or Mail. On desktop the buttons stay hidden, because the OS share
   sheet there is a dead end — its Copy does not carry file contents and it offers no
   "save to this device".
-- **Clear all marks** — keeps the names, erases the checks. Handy at the start of a new
+- **Clear all marks** — keeps the roster, erases the checks. Handy at the start of a new
   assessment window; export a backup first if you want the history.
 
 Because storage is per-device and per-browser, clearing site data or "reset this iPad" wipes it.

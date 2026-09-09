@@ -4,8 +4,9 @@
   'use strict';
 
   const STORAGE_KEY = 'letter-check.v1';
-  const APP_VERSION = '1.0.2';
+  const APP_VERSION = '1.1.0';
   const MAX_STUDENTS = 20;
+  const MAX_NUMBER = 9999;
   const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const CATS = [
     { key: 'u', label: 'Uppercase' },
@@ -43,9 +44,11 @@
     const s = blankState();
     if (!data || typeof data !== 'object') return s;
     if (Array.isArray(data.students)) {
+      // Names are deliberately not read back, even from an older backup that
+      // carried them: this app tracks students by number only.
       s.students = data.students.slice(0, MAX_STUDENTS).map((st, i) => ({
         id: typeof st.id === 'string' ? st.id : newId(),
-        name: String(st.name || `Student ${i + 1}`).slice(0, 40),
+        num: cleanNumber(st.num, i + 1),
         marks: cleanMarks(st.marks)
       }));
     }
@@ -53,6 +56,11 @@
     s.letter = LETTERS.includes(data.letter) ? data.letter : 'A';
     s.view = ['student', 'letter', 'overview'].includes(data.view) ? data.view : 'student';
     return s;
+  }
+
+  function cleanNumber(value, fallback) {
+    const n = Math.floor(Number(value));
+    return Number.isFinite(n) && n >= 1 && n <= MAX_NUMBER ? n : fallback;
   }
 
   function cleanMarks(marks) {
@@ -88,6 +96,16 @@
   /* ── Data helpers ───────────────────────────────────────── */
 
   const byId = id => state.students.find(s => s.id === id) || null;
+  const label = student => `Student ${student.num}`;
+
+  // Lowest number not already on the roster, so removing #3 frees it again.
+  function nextNumber() {
+    const taken = new Set(state.students.map(s => s.num));
+    let n = 1;
+    while (taken.has(n) && n < MAX_NUMBER) n++;
+    return n;
+  }
+
   const activeStudent = () => byId(state.activeId);
   const isOn = (student, letter, cat) => !!(student && student.marks[letter] && student.marks[letter][cat]);
 
@@ -170,7 +188,7 @@
   function renderStudentView() {
     const select = $('#studentSelect');
     select.innerHTML = state.students.length
-      ? state.students.map(s => `<option value="${s.id}"${s.id === state.activeId ? ' selected' : ''}>${esc(s.name)}</option>`).join('')
+      ? state.students.map(s => `<option value="${s.id}"${s.id === state.activeId ? ' selected' : ''}>${label(s)}</option>`).join('')
       : '<option>No students yet</option>';
     select.disabled = !state.students.length;
 
@@ -226,7 +244,7 @@
     rows.innerHTML = state.students.map(student => {
       const on = CATS.map(c => isOn(student, state.letter, c.key));
       return `<div class="row${on.every(Boolean) ? ' complete' : ''}" data-student="${student.id}">
-        <div class="gutter name">${esc(student.name)}</div>
+        <div class="gutter num">${student.num}</div>
         ${CATS.map((c, i) => toggleButton(c, state.letter, on[i])).join('')}
       </div>`;
     }).join('');
@@ -256,7 +274,7 @@
       statTile('total', 'Class mastered', totals.all, classMax * CATS.length) +
       CATS.map(c => statTile(c.key, c.label, totals[c.key], classMax)).join('');
 
-    const head = `<thead><tr><th class="namecol">Student</th>${
+    const head = `<thead><tr><th class="numcol">Student</th>${
       LETTERS.map(l => `<th>${l}</th>`).join('')}<th class="pct">%</th></tr></thead>`;
 
     const body = `<tbody>${students.map(s => {
@@ -264,10 +282,10 @@
       const cells = LETTERS.map(letter => `<td><div class="cell">${
         CATS.map(c => `<i class="${c.key}${isOn(s, letter, c.key) ? ' on' : ''}"></i>`).join('')
       }</div></td>`).join('');
-      return `<tr><th class="namecol"><button class="namebtn" data-open="${s.id}">${esc(s.name)}</button></th>${cells}<td class="pct">${Math.round((t.all / PER_STUDENT) * 100)}%</td></tr>`;
+      return `<tr><th class="numcol"><button class="numbtn" data-open="${s.id}" aria-label="Open ${label(s)}">${s.num}</button></th>${cells}<td class="pct">${Math.round((t.all / PER_STUDENT) * 100)}%</td></tr>`;
     }).join('')}</tbody>`;
 
-    const foot = `<tfoot><tr><th class="namecol">Class %</th>${
+    const foot = `<tfoot><tr><th class="numcol">Class %</th>${
       LETTERS.map(l => {
         const t = letterTotals(l);
         return `<td>${Math.round((t.all / (students.length * CATS.length)) * 100)}</td>`;
@@ -388,7 +406,7 @@
     if (student) {
       setMark(student, last.letter, last.cat, last.prev);
       const catLabel = CATS.find(c => c.key === last.cat).label.toLowerCase();
-      toast(`Undid ${esc(student.name)} — ${last.letter} ${catLabel}`);
+      toast(`Undid ${label(student)} — ${last.letter} ${catLabel}`);
     }
     render();
   });
@@ -405,33 +423,40 @@
 
   function renderRoster() {
     const list = $('#roster');
+    const full = state.students.length >= MAX_STUDENTS;
     $('#rosterCount').textContent = `${state.students.length} / ${MAX_STUDENTS}`;
-    $('#addName').disabled = state.students.length >= MAX_STUDENTS;
+    $('#addStudent').disabled = full;
+    $('#fillRoster').disabled = full;
 
     if (!state.students.length) {
-      list.innerHTML = '<li class="empty" style="display:block">No students yet. Add them one at a time, or <button class="namebtn" id="seedBtn" style="width:auto;color:var(--accent);font-weight:700;text-decoration:underline">create 20 numbered slots</button>.</li>';
-      const seed = $('#seedBtn');
-      if (seed) seed.addEventListener('click', () => {
-        for (let i = 1; i <= MAX_STUDENTS; i++) state.students.push({ id: newId(), name: `Student ${i}`, marks: {} });
-        state.activeId = state.students[0].id;
-        save();
-        renderRoster();
-      });
+      list.innerHTML = `<li class="empty" style="display:block">No students yet. Add them one at a time, or fill the roster with ${MAX_STUDENTS} numbered slots.</li>`;
       return;
     }
 
     list.innerHTML = state.students.map((s, i) => `<li data-id="${s.id}">
-      <input class="input" value="${esc(s.name)}" maxlength="40" aria-label="Student name">
+      <span class="rosterlabel">Student</span>
+      <input class="input num" type="number" inputmode="numeric" min="1" max="${MAX_NUMBER}"
+        value="${s.num}" aria-label="Student number">
       <button class="mini" data-move="-1" title="Move up"${i === 0 ? ' disabled' : ''}>&#8593;</button>
       <button class="mini" data-move="1" title="Move down"${i === state.students.length - 1 ? ' disabled' : ''}>&#8595;</button>
       <button class="mini del" data-del title="Remove student">&#10005;</button>
     </li>`).join('');
   }
 
-  $('#roster').addEventListener('input', e => {
-    if (!e.target.classList.contains('input')) return;
+  // Committed on change rather than on every keystroke: mid-edit the field can
+  // be empty or hold a number that is briefly out of range.
+  $('#roster').addEventListener('change', e => {
+    if (!e.target.classList.contains('num')) return;
     const student = byId(e.target.closest('li').dataset.id);
-    if (student) { student.name = e.target.value.slice(0, 40); save(); }
+    if (!student) return;
+    const next = cleanNumber(e.target.value, student.num);
+    if (next !== student.num && state.students.some(s => s.num === next)) {
+      toast(`Student ${next} is already on the roster.`);
+    } else {
+      student.num = next;
+      save();
+    }
+    e.target.value = student.num;
   });
 
   $('#roster').addEventListener('click', e => {
@@ -443,7 +468,7 @@
     if (e.target.hasAttribute('data-del')) {
       const student = state.students[idx];
       const marked = studentTotals(student).all;
-      if (marked && !confirm(`Remove ${student.name}? ${marked} recorded mark${marked === 1 ? '' : 's'} will be deleted.`)) return;
+      if (marked && !confirm(`Remove ${label(student)}? ${marked} recorded mark${marked === 1 ? '' : 's'} will be deleted.`)) return;
       state.students.splice(idx, 1);
       if (state.activeId === student.id) state.activeId = state.students[0] ? state.students[0].id : null;
       undoStack = undoStack.filter(entry => entry.id !== student.id);
@@ -463,19 +488,25 @@
     }
   });
 
-  $('#addForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const input = $('#addName');
-    const name = input.value.trim();
-    if (!name) return;
-    if (state.students.length >= MAX_STUDENTS) { toast(`Roster is full (${MAX_STUDENTS} students).`); return; }
-    const student = { id: newId(), name: name.slice(0, 40), marks: {} };
+  function addStudent() {
+    const student = { id: newId(), num: nextNumber(), marks: {} };
     state.students.push(student);
     if (!state.activeId) state.activeId = student.id;
-    input.value = '';
+    return student;
+  }
+
+  $('#addStudent').addEventListener('click', () => {
+    if (state.students.length >= MAX_STUDENTS) { toast(`Roster is full (${MAX_STUDENTS} students).`); return; }
+    addStudent();
     save();
     renderRoster();
-    input.focus();
+  });
+
+  $('#fillRoster').addEventListener('click', () => {
+    if (state.students.length >= MAX_STUDENTS) { toast(`Roster is full (${MAX_STUDENTS} students).`); return; }
+    while (state.students.length < MAX_STUDENTS) addStudent();
+    save();
+    renderRoster();
   });
 
   /* ── Import / export ────────────────────────────────────── */
@@ -551,12 +582,12 @@
   // comma-separated for the .csv file.
   function toTable(sep) {
     const cell = v => (new RegExp(`["\n${sep === '\t' ? '\t' : ','}]`).test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-    const header = ['Student']
+    const header = ['Student number']
       .concat(...LETTERS.map(l => CATS.map(c => `${l} ${c.label.toLowerCase()}`)))
       .concat(['Uppercase total', 'Lowercase total', 'Sound total', 'Overall total', 'Overall %']);
     const rows = state.students.map(s => {
       const t = studentTotals(s);
-      return [s.name]
+      return [String(s.num)]
         .concat(...LETTERS.map(l => CATS.map(c => (isOn(s, l, c.key) ? '1' : '0'))))
         .concat([t.u, t.l, t.s, t.all, Math.round((t.all / PER_STUDENT) * 100) + '%'].map(String));
     });
@@ -619,7 +650,7 @@
   });
 
   $('#clearMarks').addEventListener('click', () => {
-    if (!confirm('Clear every mark for all students? Names stay; all checks are erased.')) return;
+    if (!confirm('Clear every mark for all students? The roster stays; all checks are erased.')) return;
     state.students.forEach(s => { s.marks = {}; });
     undoStack = [];
     save();
@@ -664,6 +695,12 @@
   $('#shareRow').hidden = !canShareFiles(makeFile('probe.txt', 'text/plain', 'x'));
 
   $('#versionLine').textContent = `Letter Check ${APP_VERSION} — works offline, stored on this device.`;
+
+  // Write the normalized state back at startup rather than waiting for the first
+  // edit: a roster saved by 1.0.x still holds student names, and this clears them
+  // out of localStorage as soon as the app opens.
+  save();
+
   render();
   if (!state.students.length) openSheet();
 

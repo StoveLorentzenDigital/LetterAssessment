@@ -152,10 +152,7 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
   font-weight: 800; font-size: 21px; text-align: center; color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px;
 }
-.gutter.name {
-  font-size: 13px; text-align: left; line-height: 1.15; white-space: normal; color: var(--text);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-}
+.gutter.num { font-size: 17px; color: var(--text); }
 
 .tog {
   height: var(--tap); border-radius: 11px; border: 2px solid var(--line);
@@ -186,16 +183,16 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
   font-size: 11px; font-weight: 800; color: var(--muted); text-align: center;
   padding: 8px 0 6px; border-bottom: 1px solid var(--line); min-width: 21px;
 }
-.matrix th.namecol {
+.matrix th.numcol {
   position: sticky; left: 0; z-index: 3; background: var(--surface);
-  text-align: left; padding: 6px 10px; min-width: 130px; max-width: 170px;
+  text-align: left; padding: 6px 10px; min-width: 76px;
   border-right: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.matrix thead th.namecol { z-index: 4; }
+.matrix thead th.numcol { z-index: 4; }
 .matrix td { border-bottom: 1px solid var(--line); }
 .matrix tbody tr:nth-child(even) td,
-.matrix tbody tr:nth-child(even) th.namecol { background: color-mix(in srgb, var(--surface-2) 50%, var(--surface)); }
+.matrix tbody tr:nth-child(even) th.numcol { background: color-mix(in srgb, var(--surface-2) 50%, var(--surface)); }
 .matrix .cell { display: grid; gap: 2px; padding: 5px 3px; }
 .matrix .cell i { height: 4px; border-radius: 2px; background: var(--surface-2); }
 .matrix .cell i.on.u { background: var(--u); }
@@ -203,8 +200,8 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
 .matrix .cell i.on.s { background: var(--s); }
 .matrix td.pct { padding: 0 10px; font-size: 12px; font-weight: 700; text-align: right; white-space: nowrap; }
 .matrix tfoot td, .matrix tfoot th { border-top: 1px solid var(--line); font-size: 10px; color: var(--muted); text-align: center; padding: 6px 0; font-weight: 700; }
-.matrix tfoot th.namecol { text-transform: uppercase; letter-spacing: .05em; font-size: 10px; color: var(--muted); }
-.namebtn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; width: 100%; }
+.matrix tfoot th.numcol { text-transform: uppercase; letter-spacing: .05em; font-size: 10px; color: var(--muted); }
+.numbtn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; width: 100%; }
 
 /* ── Manage sheet ───────────────────────────────────────────── */
 .sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
@@ -240,7 +237,9 @@ main { padding: 12px 12px 40px; max-width: 1400px; margin: 0 auto; }
 .btnrow .btn { flex: 1 1 auto; }
 .roster { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .roster li { display: flex; gap: 6px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 6px; }
+.roster .rosterlabel { color: var(--muted); font-size: 13px; padding-left: 6px; }
 .roster .input { height: 40px; border: 0; background: none; font-weight: 600; box-shadow: none; }
+.roster .input.num { flex: none; width: 74px; margin-right: auto; padding: 0 6px; }
 .roster .mini { width: 36px; height: 36px; flex: none; border-radius: 9px; border: 1px solid var(--line); background: var(--surface-2); font-size: 15px; line-height: 1; color: var(--muted); padding: 0; }
 .roster .mini.del { color: var(--danger); }
 .empty { color: var(--muted); font-size: 14px; padding: 10px 2px; }
