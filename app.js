@@ -4,7 +4,7 @@
   'use strict';
 
   const STORAGE_KEY = 'letter-check.v1';
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.1.1';
   const MAX_STUDENTS = 20;
   const MAX_NUMBER = 9999;
   const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -201,7 +201,7 @@
 
     if (!student) {
       $('#studentScore').innerHTML = '';
-      rows.innerHTML = '<p class="empty">Add students under <strong>Manage</strong> to start assessing.</p>';
+      rows.innerHTML = '<p class="empty">Add students under <strong>Manage</strong> (top right) to start assessing.</p>';
       return;
     }
 
@@ -237,7 +237,7 @@
 
     const rows = $('#letterRows');
     if (!n) {
-      rows.innerHTML = '<p class="empty">Add students under <strong>Manage</strong> to start assessing.</p>';
+      rows.innerHTML = '<p class="empty">Add students under <strong>Manage</strong> (top right) to start assessing.</p>';
       return;
     }
 
@@ -258,7 +258,7 @@
 
     if (!students.length) {
       summary.innerHTML = '';
-      table.innerHTML = '<tbody><tr><td class="empty" style="padding:16px">No students yet.</td></tr></tbody>';
+      table.innerHTML = '<tbody><tr><td class="empty" style="padding:16px">Add students under <strong>Manage</strong> (top right) to start assessing.</td></tr></tbody>';
       return;
     }
 
@@ -701,8 +701,10 @@
   // out of localStorage as soon as the app opens.
   save();
 
+  // An empty roster deliberately does NOT pop the Manage sheet open: a first-run
+  // wall of controls is more overwhelming than the empty assessment view, which
+  // shows the shape of the app and points at Manage when they are ready.
   render();
-  if (!state.students.length) openSheet();
 
   if (navigator.serviceWorker) {
     window.addEventListener('load', () => {

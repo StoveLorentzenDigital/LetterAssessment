@@ -1,5 +1,5 @@
 /* Letter Check service worker — app shell cached for offline use. */
-const CACHE = 'letter-check-v1.1.0';
+const CACHE = 'letter-check-v1.1.1';
 const SHELL = [
   './',
   './index.html',
