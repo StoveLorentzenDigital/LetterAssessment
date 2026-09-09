@@ -1,6 +1,6 @@
 # Letter Check
 
-A tiny offline PWA for tracking letter comprehension across a class of up to 20 students.
+A tiny offline PWA for tracking letter comprehension across a whole class.
 Students are identified by number, never by name. For every student and every letter A–Z you
 toggle three things:
 
@@ -10,8 +10,8 @@ toggle three things:
 | **a** (amber) | identifies the lowercase letter |
 | **🔊** (violet) | produces the letter sound |
 
-That's 78 checks per student, 1,560 for a full class — so the whole app is built around
-making one tap the entire interaction.
+That's 78 checks per student, well over a thousand for a full class — so the whole app is
+built around making one tap the entire interaction.
 
 **Live app:** <https://stovelorentzendigital.github.io/LetterAssessment/>
 
@@ -28,35 +28,35 @@ making one tap the entire interaction.
 **Undo** in the top bar reverses the last toggle (up to 100 deep) for when a tap lands on the
 wrong row.
 
-## Running it
+## Serving it locally
 
 Any static web server works — the app is plain HTML, CSS, and JavaScript with no build step.
 
 ```bash
-cd C:\Github\LetterAssessment
+cd ...\LetterAssessment
 python -m http.server 8000
 ```
 
 Then open <http://localhost:8000>. A server is required (not `file://`) because service workers
 and the manifest only load over `http://localhost` or HTTPS.
 
-To use it on a classroom tablet, host the folder anywhere static — GitHub Pages, Netlify, a
-school web server — and open it once on the device.
+To use it on a classroom tablet, host the folder anywhere static and open it once on the device.
 
 ## Installing on a device
 
-- **iPad / iPhone** — open in Safari, Share → *Add to Home Screen*.
+- **iPad / iPhone** — open in Safari or Chrome, Share → *Add to Home Screen*.
 - **Android / Chromebook / desktop Chrome or Edge** — open the app, then use the install icon in
   the address bar, or the **Install app on this device** button that appears under *Manage*.
 
 Once installed it launches full screen and works with no network at all.
 
-## Students are numbers
+## Student data is tracked by number
 
 The roster is a list of numbers — **Student 1**, **Student 2**, and so on — and the app never
-asks for or stores a name. Under *Manage* you add slots one at a time or fill the roster to 20,
-and each slot's number is editable, so it can match the numbering already in your own gradebook.
-Removing a student frees that number for the next one added.
+asks for or stores a name. Under *Manage* you add slots one at a time, or **Fill roster** to
+seed 20 at once for a typical class. Each slot's number is editable, so it can match the
+numbering already in your own gradebook, and removing a student frees that number for the next
+one added.
 
 Keep the number-to-child key wherever you already keep your roster. That way an exported CSV, a
 JSON backup, or a lost tablet carries no identifying information about any child.
